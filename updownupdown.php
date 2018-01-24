@@ -366,8 +366,8 @@ if (!class_exists("UpDownPostCommentVotes"))
 				|| !$user_id )
 				die(json_encode($result));
 
-			$post_id = $_POST['post_id'];
-			$comment_id = $_POST['comment_id'];
+			$post_id = intval( $_POST['post_id'] );
+			$comment_id = intval( $_POST['comment_id'] );
 
 			if ( $post_id != null ) {
 				$element_name = 'post';
@@ -379,7 +379,7 @@ if (!class_exists("UpDownPostCommentVotes"))
 			else
 				die(json_encode($result));
 
-			$vote_value = $_POST['direction'];
+			$vote_value = intval( $_POST['direction'] );
 			$down_vote = 0;
 			$up_vote = 0;
 
