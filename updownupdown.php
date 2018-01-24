@@ -30,15 +30,12 @@
  *	This plugin was initially developed as a project of Wharton Research Data Services.
 */
 
-if (!class_exists("UpDownPostCommentVotes"))
-{
+if ( ! class_exists("UpDownPostCommentVotes") ) {
 	global $updown_db_version;
 	$updown_db_version = "2.0";
 
-	class UpDownPostCommentVotes
-	{
-		function __construct()
-		{
+	class UpDownPostCommentVotes {
+		function __construct() {
 			add_action( 'init', array( &$this, 'init_plugin' ));
 			add_action( 'wp_ajax_register_vote', array( &$this, 'ajax_register_vote' ));
 			add_action( 'wp_ajax_nopriv_register_vote', array( &$this, 'ajax_register_vote' ));
@@ -353,32 +350,33 @@ if (!class_exists("UpDownPostCommentVotes"))
 												'comment_id' => null,
 												'direction' => null );
 
-			if (!is_user_logged_in() && !$this->guest_allowed())
-			{
+			if ( ! is_user_logged_in() && ! $this->guest_allowed() ) {
 				$result['message'] = 'You must be logged in to vote.';
-				die(json_encode($result));
+				die( json_encode( $result ) );
 			}
 
 			$user_id = $this->get_user_id();
 
 			//Validate expected params
-			if ( ($_POST['post_id'] == null && $_POST['comment_id'] == null)
+			if ( ( $_POST['post_id'] == null && $_POST['comment_id'] == null )
 						|| $_POST['direction'] == null
-				|| !$user_id )
-				die(json_encode($result));
+						|| ! $user_id ) {
+				die( json_encode( $result ) );
+			}
 
 			$post_id = intval( $_POST['post_id'] );
 			$comment_id = intval( $_POST['comment_id'] );
 
-			if ( $post_id != null ) {
+			if ( $post_id != null && $post_id > 0 ) {
 				$element_name = 'post';
 				$element_id = $post_id;
-			} elseif ( $comment_id != null ) {
+			} elseif ( $comment_id != null && $comment_id > 0 ) {
 				$element_name = 'comment';
 				$element_id = $comment_id;
 			}
-			else
-				die(json_encode($result));
+			else {
+				die( json_encode( $result ) );
+			}
 
 			$vote_value = intval( $_POST['direction'] );
 			$down_vote = 0;
@@ -386,21 +384,16 @@ if (!class_exists("UpDownPostCommentVotes"))
 
 			if ( $vote_value > 0 ) {
 				$vote_value = 1;
-				$up_vote_delta = 1;
 			} elseif ( $vote_value < 0 ) {
 				$vote_value = -1;
-				$down_vote_delta = 1;
 			}
 
-			if ( $element_name == 'post' )
+			if ( $element_name == 'post' ) {
 				$existing_vote = $this->get_post_user_vote( $user_id, $post_id );
-			elseif	( $element_name == 'comment' )
+			}
+			elseif	( $element_name == 'comment' ) {
 				$existing_vote = $this->get_comment_user_vote( $user_id, $comment_id );
-
-			if ( $existing_vote < 0 )
-				$down_vote_delta -= 1;
-			elseif ( $existing_vote > 0 )
-				$up_vote_delta -= 1;
+			}
 
 			//Update user vote
 			if ($existing_vote != null) {
@@ -436,12 +429,15 @@ if (!class_exists("UpDownPostCommentVotes"))
 			$result["post_id"] = $post_id;
 			$result["comment_id"] = $comment_id;
 			$result["direction"] = $vote_value;
-			$result["vote_totals"] = $wpdb->get_row($wpdb->prepare("
+			$result["vote_totals"] = $wpdb->get_row( $wpdb->prepare("
 																SELECT vote_count_up as up, vote_count_down as down
-				FROM ".$wpdb->base_prefix."up_down_".$element_name."_vote_totals
-																WHERE ".$element_name."_id = %d", $element_id));
+																FROM ".$wpdb->base_prefix."up_down_".$element_name."_vote_totals
+																WHERE ".$element_name."_id = %d", $element_id ) );
 
-			die(json_encode($result));
+			do_action( 'updown_after_vote', $element_name, $element_id, $result["vote_totals"] );
+
+			die( json_encode( $result ) );
+
 		}
 	} //class:UpDownPostCommentVotes
 
@@ -457,8 +453,9 @@ if (!class_exists("UpDownPostCommentVotes"))
 	function up_down_post_votes( $post_id, $allow_votes = true ) {
 		global $up_down_plugin;
 
-		if ( !$post_id )
+		if ( !$post_id ) {
 			return false;
+		}
 
 		$vote_counts = $up_down_plugin->get_post_votes_total( $post_id );
 		$existing_vote = $up_down_plugin->get_post_user_vote( $up_down_plugin->get_user_id(), $post_id );
@@ -471,8 +468,9 @@ if (!class_exists("UpDownPostCommentVotes"))
 	function up_down_comment_votes( $comment_id, $allow_votes = true ) {
 		global $up_down_plugin;
 
-		if ( !$comment_id )
+		if ( !$comment_id ) {
 			return false;
+		}
 
 		$vote_counts = $up_down_plugin->get_comment_votes_total( $comment_id );
 		$existing_vote = $up_down_plugin->get_comment_user_vote( $up_down_plugin->get_user_id(), $comment_id );
@@ -486,42 +484,42 @@ if (!class_exists("UpDownPostCommentVotes"))
 	//********************************************************************
 	// Admin page
 
-	function updown_plugin_menu()
-	{
+	function updown_plugin_menu() {
 		add_options_page('UpDown Options', 'UpDownUpDown', 'manage_options', 'updown_plugin_menu_id', 'updown_options');
 	}
 
-	function updown_options()
-	{
+	function updown_options() {
 		global $up_down_plugin;
-		if (!current_user_can('manage_options'))
-		{
+
+		if (!current_user_can('manage_options')) {
 			wp_die( __('You do not have sufficient permissions to access this page.') );
 		}
 
-		if (isset ($_POST['Submit']))
-		{
+		if (isset ($_POST['Submit'])) {
 			// guest allowed
-			if (isset ($_POST['guest_allowed']) && $_POST['guest_allowed'] == "on")
-			{
+			if (isset ($_POST['guest_allowed']) && $_POST['guest_allowed'] == "on") {
 				update_option ("updown_guest_allowed", "allowed");
 			}
-			else
+			else {
 				update_option ("updown_guest_allowed", "not allowed");
+			}
 
 			// style
 			update_option ("updown_css", trim (strip_tags ($_POST['style'])));
 
 			// counter type
 			update_option ("updown_counter_type", trim (strip_tags ($_POST['counter'])));
-			if ($_POST['counter-sign'] == "yes")
+			if ($_POST['counter-sign'] == "yes") {
 				update_option ("updown_counter_sign", "yes");
-			else
+			}
+			else {
 				update_option ("updown_counter_sign", "no");
+			}
 
 			// text
 			update_option ("updown_vote_text", trim ($_POST['votetext']));
 			update_option ("updown_votes_text", trim ($_POST['votestext']));
+
 		}
 
 		echo '<div class="wrap"><h2>UpDownUpDown Plugin Settings</h2><form name="form1" method="post" action=""><table width="100%" cellpadding="5" class="form-table"><tbody>';
