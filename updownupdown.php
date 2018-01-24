@@ -33,7 +33,7 @@
 if (!class_exists("UpDownPostCommentVotes"))
 {
 	global $updown_db_version;
-	$updown_db_version = "1.1";
+	$updown_db_version = "2.0";
 
 	class UpDownPostCommentVotes
 	{
@@ -52,9 +52,8 @@ if (!class_exists("UpDownPostCommentVotes"))
 
 			require_once( ABSPATH . 'wp-admin/upgrade.php' );
 
-			if (get_option("updown_db_version")) {
-				if (get_option("updown_db_version") != $updown_db_version)
-					die ("downgrade not supported!!!"); // there is no prev version using this var
+			$current_db_version = get_option("updown_db_version");
+			if ( $current_db_version >= $updown_db_version ) {
 				return;
 			}
 
@@ -62,50 +61,52 @@ if (!class_exists("UpDownPostCommentVotes"))
 				$charset_collate = "DEFAULT CHARACTER SET ".$wpdb->charset;
 			}
 
-			$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote_totals (
-						id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-						post_id bigint(20) NOT NULL,
-						vote_count_up bigint(20) NOT NULL DEFAULT '0',
-						vote_count_down bigint(20) NOT NULL DEFAULT '0',
-						KEY post_id (post_id),
-						CONSTRAINT UNIQUE (post_id)
-			) ".$charset_collate.";";
+			if( ! $current_db_version ) {
 
-			$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote (
-						id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-						post_id bigint(20) unsigned NOT NULL,
-						voter_id varchar(32) NOT NULL DEFAULT '',
-						vote_value int(11) NOT NULL DEFAULT '0',
-						KEY post_id (post_id),
-						KEY voter_id (voter_id),
-						KEY post_voter (post_id, voter_id),
-						CONSTRAINT UNIQUE (post_id, voter_id)
-			) ".$charset_collate.";";
+				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote_totals (
+							post_id bigint(20) NOT NULL PRIMARY KEY,
+							vote_count_up bigint(20) NOT NULL DEFAULT '0',
+							vote_count_down bigint(20) NOT NULL DEFAULT '0'
+				) ".$charset_collate.";";
 
-			$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote_totals (
-						id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-						comment_id bigint(20) unsigned	NOT NULL,
-						post_id bigint(20) unsigned NOT NULL,
-						vote_count_up bigint(20) NOT NULL DEFAULT '0',
-						vote_count_down bigint(20) NOT NULL DEFAULT '0',
-						KEY post_id (post_id),
-						KEY comment_id (comment_id),
-						CONSTRAINT UNIQUE (comment_id)
-			) ".$charset_collate.";";
+				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote (
+							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+							post_id bigint(20) unsigned NOT NULL,
+							voter_id varchar(32) NOT NULL DEFAULT '',
+							vote_value int(11) NOT NULL DEFAULT '0',
+							KEY post_id (post_id),
+							KEY voter_id (voter_id),
+							KEY post_voter (post_id, voter_id),
+							CONSTRAINT UNIQUE (post_id, voter_id)
+				) ".$charset_collate.";";
 
-			$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote (
-						id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
-						comment_id bigint(20) unsigned NOT NULL,
-						post_id bigint(20) unsigned NOT NULL,
-						voter_id varchar(32) NOT NULL DEFAULT '',
-						vote_value int(11) NOT NULL DEFAULT '0',
-						KEY comment_id (comment_id),
-						KEY post_id (post_id),
-						KEY voter_id (voter_id),
-						KEY post_voter (post_id, voter_id),
-						KEY comment_voter (comment_id, voter_id),
-						CONSTRAINT UNIQUE (comment_id, voter_id)
-			) ".$charset_collate.";";
+				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote_totals (
+							comment_id bigint(20) unsigned	NOT NULL PRIMARY KEY,
+							vote_count_up bigint(20) NOT NULL DEFAULT '0',
+							vote_count_down bigint(20) NOT NULL DEFAULT '0'
+				) ".$charset_collate.";";
+
+				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote (
+							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+							comment_id bigint(20) unsigned NOT NULL,
+							post_id bigint(20) unsigned NOT NULL,
+							voter_id varchar(32) NOT NULL DEFAULT '',
+							vote_value int(11) NOT NULL DEFAULT '0',
+							KEY comment_id (comment_id),
+							KEY post_id (post_id),
+							KEY voter_id (voter_id),
+							KEY post_voter (post_id, voter_id),
+							KEY comment_voter (comment_id, voter_id),
+							CONSTRAINT UNIQUE (comment_id, voter_id)
+				) ".$charset_collate.";";
+			}
+			else {
+
+				$sqls[] = "ALTER TABLE ".$wpdb->base_prefix."up_down_post_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP INDEX post_id, DROP KEY post_id_2, ADD PRIMARY KEY (post_id)";
+
+				$sqls[] = "ALTER TABLE ".$wpdb->base_prefix."up_down_comment_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP COLUMNS post_id, DROP INDEX post_id, DROP KEY comment_id, DROP KEY comment_id_2, ADD PRIMARY KEY (comment_id)";
+
+			}
 
 			dbDelta( $sql );
 
@@ -418,16 +419,16 @@ if (!class_exists("UpDownPostCommentVotes"))
 			}
 
 			//Update total
-			if ($wpdb->query($wpdb->prepare("
-					UPDATE ".$wpdb->base_prefix."up_down_".$element_name."_vote_totals
-					SET vote_count_up = (vote_count_up + %d),
-						vote_count_down = (vote_count_down + %d)
-					WHERE ".$element_name."_id = %d", $up_vote_delta, $down_vote_delta, $element_id)) == 0)
-				$wpdb->query($wpdb->prepare("
-				INSERT INTO ".$wpdb->base_prefix."up_down_".$element_name."_vote_totals
+			$totals_table = $wpdb->base_prefix."up_down_".$element_name."_vote_totals";
+			$votes_table = $wpdb->base_prefix."up_down_".$element_name."_vote";
+
+			$wpdb->query($wpdb->prepare("
+				INSERT INTO " . $totals_table . "
 					( vote_count_up, vote_count_down, ".$element_name."_id )
-					VALUES
-					( %d, %d, %d )", $up_vote_delta, $down_vote_delta, $element_id));
+					SELECT SUM( IF(vote_value > 0, 1, 0) ) AS up, SUM( IF(vote_value < 0, 1, 0) ) AS down, ".$element_name."_id
+					FROM " . $votes_table . "
+					WHERE ".$element_name."_id = %d GROUP BY ".$element_name."_id
+					ON DUPLICATE KEY UPDATE vote_count_up = VALUES(vote_count_up), vote_count_down = VALUES(vote_count_down)", $element_id ) );
 
 			//Return success
 			$result["status"] = 1;
