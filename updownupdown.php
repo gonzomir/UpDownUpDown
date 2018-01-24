@@ -321,20 +321,20 @@ if (!class_exists("UpDownPostCommentVotes"))
 				$vote_label .= get_option ('updown_votes_text');
 
 			if ($votable)
-				echo '<div><img class="updown-button updown-up-button" vote-direction="1" src="'.$up_img_src.'"></div>';
+				echo '<div><button type="button" class="updown-button updown-up-button" vote-direction="1"><img src="'.$up_img_src.'"></button></div>';
 
 			if (get_option ("updown_counter_type") == "total")
 			{
-				echo '<div class="updown-total-count'.$updown_classnames.'" title="'.$vote_total_count_num.' vote'.($vote_total_count_num != 1 ? 's' : '').' so far">'.$vote_total_count.'</div>';
+				echo '<div class="updown-total-count'.$updown_classnames.'" title="'.$vote_total_count_num.' vote'.($vote_total_count_num != 1 ? 's' : '').' so far">'.(int)$vote_total_count.'</div>';
 			}
 			else
 			{
-				echo '<div class="updown-up-count'.$up_classnames.'">'.$vote_up_count.'</div>';
-				echo '<div class="updown-down-count'.$down_classnames.'">'.$vote_down_count.'</div>';
+				echo '<div class="updown-up-count'.$up_classnames.'">'.(int)$vote_up_count.'</div>';
+				echo '<div class="updown-down-count'.$down_classnames.'">'.(int)$vote_down_count.'</div>';
 			}
 
 			if ($votable)
-				echo '<div><img class="updown-button updown-down-button" vote-direction="-1" src="'.$down_img_src.'"></div>';
+				echo '<div><button type="button" class="updown-button updown-down-button" vote-direction="-1"><img src="'.$down_img_src.'"></button></div>';
 
 			echo '<div class="updown-label">'.$vote_label.'</div>';
 
