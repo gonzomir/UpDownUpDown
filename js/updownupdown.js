@@ -124,7 +124,7 @@ jQuery(document).ready(function(){
 	jQuery('.updown-button').on( 'click', function( event ) {
 		var id = jQuery(this).parent().parent().attr('id').split("-");
     var vote_value = -1;
-    var button_obj = jQuery(event.target);
+    var button_obj = jQuery(this);
 
     //Remove vote if clicking same vote again
 		if ( button_obj.find('img').attr('src').indexOf('-on.png') >= 0 ) {
