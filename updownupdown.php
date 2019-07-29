@@ -35,12 +35,22 @@ if ( ! class_exists("UpDownPostCommentVotes") ) {
 	$updown_db_version = "2.0";
 
 	class UpDownPostCommentVotes {
+
+		private static $instance;
+
 		function __construct() {
 			add_action( 'init', array( &$this, 'init_plugin' ));
 			add_action( 'wp_ajax_register_vote', array( &$this, 'ajax_register_vote' ));
 			add_action( 'wp_ajax_nopriv_register_vote', array( &$this, 'ajax_register_vote' ));
 			add_action( 'wp_head', array( &$this, 'add_ajax_url' ));
 			add_action( 'admin_menu', 'updown_plugin_menu' );
+		}
+
+		public static function get_instance() {
+			if ( ! isset( self::$instance ) ) {
+				self::$instance = new UpDownPostCommentVotes();
+			}
+			return self::$instance;
 		}
 
 		public function setup_plugin() {
@@ -441,19 +451,16 @@ if ( ! class_exists("UpDownPostCommentVotes") ) {
 		}
 	} //class:UpDownPostCommentVotes
 
-	//Create instance of plugin
-	$up_down_plugin = new UpDownPostCommentVotes();
-
 	//Handle plugin activation and update
-	register_activation_hook( __FILE__, array( &$up_down_plugin, 'setup_plugin' ));
+	register_activation_hook( __FILE__, array( UpDownPostCommentVotes::get_instance(), 'setup_plugin' ));
 
 	//********************************************************************
 	//Custom template tags
 
 	function up_down_post_votes( $post_id, $allow_votes = true ) {
-		global $up_down_plugin;
+		$up_down_plugin = UpDownPostCommentVotes::get_instance();
 
-		if ( !$post_id ) {
+		if ( ! $post_id ) {
 			return false;
 		}
 
@@ -466,7 +473,7 @@ if ( ! class_exists("UpDownPostCommentVotes") ) {
 	}
 
 	function up_down_comment_votes( $comment_id, $allow_votes = true ) {
-		global $up_down_plugin;
+		$up_down_plugin = UpDownPostCommentVotes::get_instance();
 
 		if ( !$comment_id ) {
 			return false;
@@ -489,7 +496,7 @@ if ( ! class_exists("UpDownPostCommentVotes") ) {
 	}
 
 	function updown_options() {
-		global $up_down_plugin;
+		$up_down_plugin = UpDownPostCommentVotes::get_instance();
 
 		if (!current_user_can('manage_options')) {
 			wp_die( __('You do not have sufficient permissions to access this page.') );
