@@ -333,14 +333,14 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 				$up_classnames = ' updown-active';
 			}
 
-			if ( ! get_option( 'updown_counter_sign' ) || get_option( 'updown_counter_sign' ) === 'yes' ) {
+			if ( empty( get_option( 'updown_counter_sign' ) ) || get_option( 'updown_counter_sign' ) === 'yes' ) {
 				$updown_classnames .= ' updown-count-sign';
 			} else {
 				$updown_classnames .= ' updown-count-unsign';
 			}
 
 			if ( $vote_total_count > 0 ) {
-				if ( ! get_option( 'updown_counter_sign' ) || get_option( 'updown_counter_sign' ) === 'yes' ) {
+				if ( empty( get_option( 'updown_counter_sign' ) ) || get_option( 'updown_counter_sign' ) === 'yes' ) {
 					$vote_total_count = "+" . $vote_total_count;
 				}
 				$updown_classnames .= ' updown-pos-count';
@@ -372,15 +372,15 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 
 			if ( get_option( 'updown_counter_type' ) === 'total' ) {
 				printf(
-					apply_filters( 'updown_total_count_markup', '<div class="%3$s" title="%2$s">%1$d</div>' ),
-					intval( $vote_total_count ),
+					apply_filters( 'updown_total_count_markup', '<div class="%3$s" title="%2$s">%1$s</div>' ),
+					esc_html( $vote_total_count ),
 					esc_attr(
 						sprintf(
 							_n( '%d vote so far', '%d votes so far', $vote_total_count_num, 'updownupdown' ),
 							$vote_total_count_num
 						)
 					),
-					'updown-total-count' . $updown_classnames . ''
+					esc_attr( 'updown-total-count' . $updown_classnames )
 				);
 			} else {
 				printf(
