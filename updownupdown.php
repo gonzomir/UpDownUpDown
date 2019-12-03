@@ -59,24 +59,24 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 
 			require_once( ABSPATH . 'wp-admin/upgrade.php' );
 
-			$current_db_version = get_option("updown_db_version");
+			$current_db_version = get_option( 'updown_db_version' );
 			if ( $current_db_version >= $updown_db_version ) {
 				return;
 			}
 
-			if ( ! empty($wpdb->charset) ) {
+			if ( ! empty( $wpdb->charset ) ) {
 				$charset_collate = "DEFAULT CHARACTER SET ".$wpdb->charset;
 			}
 
 			if ( ! $current_db_version ) {
 
-				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote_totals (
+				$sql[] = "CREATE TABLE {$wpdb->base_prefix}up_down_post_vote_totals (
 							post_id bigint(20) NOT NULL PRIMARY KEY,
 							vote_count_up bigint(20) NOT NULL DEFAULT '0',
 							vote_count_down bigint(20) NOT NULL DEFAULT '0'
-				) ".$charset_collate.";";
+				) {$charset_collate};";
 
-				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_post_vote (
+				$sql[] = "CREATE TABLE {$wpdb->base_prefix}up_down_post_vote (
 							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
 							post_id bigint(20) unsigned NOT NULL,
 							voter_id varchar(32) NOT NULL DEFAULT '',
@@ -85,15 +85,15 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 							KEY voter_id (voter_id),
 							KEY post_voter (post_id, voter_id),
 							CONSTRAINT UNIQUE (post_id, voter_id)
-				) ".$charset_collate.";";
+				) {$charset_collate};";
 
-				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote_totals (
+				$sql[] = "CREATE TABLE {$wpdb->base_prefix}up_down_comment_vote_totals (
 							comment_id bigint(20) unsigned	NOT NULL PRIMARY KEY,
 							vote_count_up bigint(20) NOT NULL DEFAULT '0',
 							vote_count_down bigint(20) NOT NULL DEFAULT '0'
-				) ".$charset_collate.";";
+				) {$charset_collate};";
 
-				$sql[] = "CREATE TABLE ".$wpdb->base_prefix."up_down_comment_vote (
+				$sql[] = "CREATE TABLE {$wpdb->base_prefix}up_down_comment_vote (
 							id bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
 							comment_id bigint(20) unsigned NOT NULL,
 							post_id bigint(20) unsigned NOT NULL,
@@ -105,23 +105,23 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 							KEY post_voter (post_id, voter_id),
 							KEY comment_voter (comment_id, voter_id),
 							CONSTRAINT UNIQUE (comment_id, voter_id)
-				) ".$charset_collate.";";
+				) {$charset_collate};";
 			}
 			else {
 
-				$sqls[] = "ALTER TABLE ".$wpdb->base_prefix."up_down_post_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP INDEX post_id, DROP KEY post_id_2, ADD PRIMARY KEY (post_id)";
+				$sqls[] = "ALTER TABLE {$wpdb->base_prefix}up_down_post_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP INDEX post_id, DROP KEY post_id_2, ADD PRIMARY KEY (post_id)";
 
-				$sqls[] = "ALTER TABLE ".$wpdb->base_prefix."up_down_comment_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP COLUMNS post_id, DROP INDEX post_id, DROP KEY comment_id, DROP KEY comment_id_2, ADD PRIMARY KEY (comment_id)";
+				$sqls[] = "ALTER TABLE {$wpdb->base_prefix}up_down_comment_vote_totals DROP PRIMARY KEY, DROP COLUMN id, DROP COLUMNS post_id, DROP INDEX post_id, DROP KEY comment_id, DROP KEY comment_id_2, ADD PRIMARY KEY (comment_id)";
 
 			}
 
 			dbDelta( $sql );
 
 			# If old style post vote logging table exists, port records over to new logging table
-			if ( $wpdb->get_var("SHOW TABLES LIKE '".$wpdb->base_prefix."up_down_post_votes'") == $wpdb->base_prefix."up_down_post_votes" ) {
+			if ( $wpdb->get_var("SHOW TABLES LIKE '{$wpdb->base_prefix}up_down_post_votes'") == $wpdb->base_prefix."up_down_post_votes" ) {
 
 				// Port post vote logs
-				$result_query = $wpdb->get_results($wpdb->prepare("SELECT * FROM ".$wpdb->base_prefix."up_down_post_votes"));
+				$result_query = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$wpdb->base_prefix}up_down_post_votes"));
 
 				foreach ( $result_query as $value ) {
 					$wpdb->insert ($wpdb->base_prefix."up_down_post_vote",
@@ -215,7 +215,7 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 		}
 
 		function guest_allowed() {
-			return get_option ("updown_guest_allowed") == "allowed";
+			return get_option( 'updown_guest_allowed' ) === 'allowed';
 		}
 
 		public function get_user_id() {
@@ -246,11 +246,11 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 			);
 
 			return ( count( $result_query ) === 1 ? array(
-				"up" => $result_query[0]->vote_count_up,
-				"down" => $result_query[0]->vote_count_down,
+				'up' => $result_query[0]->vote_count_up,
+				'down' => $result_query[0]->vote_count_down,
 			) : array(
-				"up" => 0,
-				"down" => 0,
+				'up' => 0,
+				'down' => 0,
 			) );
 		}
 
@@ -269,11 +269,11 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 			);
 
 			return ( count($result_query) == 1 ? array(
-				"up" => $result_query[0]->vote_count_up,
-				"down" => $result_query[0]->vote_count_down,
+				'up' => $result_query[0]->vote_count_up,
+				'down' => $result_query[0]->vote_count_down,
 			) : array(
-				"up" => 0,
-				"down" => 0,
+				'up' => 0,
+				'down' => 0,
 			) );
 		}
 
@@ -364,21 +364,48 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 			}
 
 			if ( $votable ) {
-				echo '<div><button type="button" class="updown-button updown-up-button" vote-direction="1"><img src="' . $up_img_src . '"></button></div>';
+				printf(
+					apply_filters( 'updown_up_button_markup', '<div><button type="button" class="updown-button updown-up-button" data-vote-direction="1">%s</button></div>' ),
+					apply_filters( 'updown_up_button_text', '<img src="' . $up_img_src . '">' )
+				);
 			}
 
 			if ( get_option( 'updown_counter_type' ) === 'total' ) {
-				echo '<div class="updown-total-count' . $updown_classnames . '" title="' . $vote_total_count_num . ' vote' . ( $vote_total_count_num != 1 ? 's' : '' ) . ' so far">' . (int)$vote_total_count . '</div>';
+				printf(
+					apply_filters( 'updown_total_count_markup', '<div class="%3$s" title="%2$s">%1$d</div>' ),
+					intval( $vote_total_count ),
+					esc_attr(
+						sprintf(
+							_n( '%d vote so far', '%d votes so far', $vote_total_count_num, 'updownupdown' ),
+							$vote_total_count_num
+						)
+					),
+					'updown-total-count' . $updown_classnames . ''
+				);
 			} else {
-				echo '<div class="updown-up-count' . $up_classnames . '">' . (int)$vote_up_count . '</div>';
-				echo '<div class="updown-down-count' . $down_classnames . '">' . (int)$vote_down_count . '</div>';
+				printf(
+					apply_filters( 'updown_up_count_markup', '<div class="%2$s">%1$d</div>'),
+					intval( $vote_up_count ),
+					esc_attr( 'updown-up-count' . $up_classnames )
+				);
+				printf(
+					apply_filters( 'updown_down_count_markup', '<div class="%2$s">%1$d</div>'),
+					intval( $vote_down_count ),
+					esc_attr( 'updown-down-count' . $down_classnames )
+				);
 			}
 
 			if ( $votable ) {
-				echo '<div><button type="button" class="updown-button updown-down-button" vote-direction="-1"><img src="'.$down_img_src.'"></button></div>';
+				printf(
+					apply_filters( 'updown_down_button_markup', '<div><button type="button" class="updown-button updown-down-button" data-vote-direction="-1">%s</button></div>' ),
+					apply_filters( 'updown_down_button_text', '<img src="' . $down_img_src . '">' )
+				);
 			}
 
-			echo '<div class="updown-label">' . $vote_label . '</div>';
+			printf(
+				apply_filters( 'updown_label', '<div class="updown-label">%s</div>' ),
+				esc_html( $vote_label )
+			);
 
 		}
 
@@ -411,8 +438,8 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 				die( json_encode( $result ) );
 			}
 
-			$post_id = intval( $_POST['post_id'] );
-			$comment_id = intval( $_POST['comment_id'] );
+			$post_id = empty( $_POST['post_id'] ) ? 0 : intval( $_POST['post_id'] );
+			$comment_id = empty( $_POST['comment_id'] ) ? 0 : intval( $_POST['comment_id'] );
 
 			if ( $post_id > 0 ) {
 				$element_name = 'post';
