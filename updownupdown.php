@@ -425,7 +425,7 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 			);
 
 			if ( ! is_user_logged_in() && ! $this->guest_allowed() ) {
-				$result['message'] = 'You must be logged in to vote.';
+				$result['message'] = __( 'You must be logged in to vote.', 'updownupdown' );
 				die( json_encode( $result ) );
 			}
 
@@ -501,7 +501,7 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 
 			// Return success.
 			$result["status"] = 1;
-			$result["message"] = 'Your vote has been registered for this ' . $element_name . '.';
+			$result["message"] = __( 'Your vote has been registered for.', 'updownupdown' );
 			$result["post_id"] = $post_id;
 			$result["comment_id"] = $comment_id;
 			$result["direction"] = $vote_value;
