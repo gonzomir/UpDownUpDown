@@ -118,11 +118,19 @@ jQuery(document).ready(function(){
   }
 
   function highlightButton( buttonObj ) {
-    buttonObj.addClass('on').find('img').prop( 'src', buttonObj.find('img').prop( 'src' ).replace( '.png', '-on.png' ) );
+    buttonObj.addClass('on');
+    image = buttonObj.find('img');
+    if ( image.length > 0 ) {
+      image.prop( 'src', image.prop( 'src' ).replace( '.png', '-on.png' ) );
+    }
   }
 
   function dehighlightButton( buttonObj ) {
-    buttonObj.removeClass('on').find('img').prop( 'src', buttonObj.find('img').prop( 'src' ).replace( '-on.png', '.png' ) );
+    buttonObj.removeClass('on');
+    image = buttonObj.find('img');
+    if ( image.length > 0 ) {
+      image.prop( 'src', image.prop( 'src' ).replace( '-on.png', '.png' ) );
+    }
   }
 
 	jQuery('.updown-button').on( 'click', function( event ) {
