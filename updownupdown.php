@@ -346,7 +346,7 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 				$updown_classnames .= ' updown-pos-count';
 			} elseif ( $vote_total_count < 0 ) {
 				if ( get_option( 'updown_counter_sign' ) === 'no' ) {
-					$vote_total_count = substr ($vote_total_count, 1);
+					$vote_total_count = substr( $vote_total_count, 1 );
 				}
 				$updown_classnames .= ' updown-neg-count';
 			}
@@ -354,7 +354,7 @@ if ( ! class_exists( 'UpDownPostCommentVotes' ) ) {
 			if ( $vote_up_count === 0 && $vote_down_count === 0 && $votable ) {
 				$vote_up_count = '';
 				$vote_down_count = '';
-				$vote_total_count = '';
+				$vote_total_count = '0';
 			}
 
 			if ( $votable ) {
